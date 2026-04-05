@@ -6,6 +6,7 @@ import Home     from './pages/Home'
 import Calendar from './pages/Calendar'
 import Shopping from './pages/Shopping'
 import Tasks    from './pages/Tasks'
+import Expenses from './pages/Expenses'
 import BottomNav from './components/BottomNav'
 
 function ProtectedApp() {
@@ -34,6 +35,7 @@ function ProtectedApp() {
           <Route path="/calendrier" element={<Calendar />} />
           <Route path="/courses"    element={<Shopping />} />
           <Route path="/taches"     element={<Tasks />} />
+          <Route path="/depenses"   element={<Expenses />} />
           <Route path="*"           element={<Navigate to="/" replace />} />
         </Routes>
       </div>

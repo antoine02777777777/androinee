@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   collection, query, where, orderBy, limit,
@@ -32,12 +32,16 @@ function checkUpcomingNotifications(events) {
 }
 
 export default function Home() {
-  const { profile, logout } = useAuth()
+  const { user, profile, couple, logout } = useAuth()
   const navigate = useNavigate()
-  const [events, setEvents]     = useState([])
-  const [tasks, setTasks]       = useState([])
+  const [events,   setEvents]   = useState([])
+  const [tasks,    setTasks]    = useState([])
   const [shopping, setShopping] = useState([])
-  const coupleId = profile?.coupleId
+  const [expenses, setExpenses] = useState([])
+  const coupleId    = profile?.coupleId
+  const myUid       = user?.uid
+  const partnerUid  = couple?.members?.find(m => m !== myUid)
+  const partnerName = couple?.names?.[partnerUid]?.split(' ')[0] || 'Partenaire'
 
   useEffect(() => {
     if ('Notification' in window && Notification.permission === 'default') {
@@ -75,6 +79,23 @@ export default function Home() {
     const q = query(collection(db, 'couples', coupleId, 'shopping'), where('checked', '==', false))
     return onSnapshot(q, snap => setShopping(snap.docs.map(d => ({ id: d.id, ...d.data() }))))
   }, [coupleId])
+
+  useEffect(() => {
+    if (!coupleId) return
+    return onSnapshot(
+      query(collection(db, 'couples', coupleId, 'expenses'), where('settled', '==', false)),
+      snap => setExpenses(snap.docs.map(d => ({ id: d.id, ...d.data() })))
+    )
+  }, [coupleId])
+
+  const balance = useMemo(() => {
+    let iOwe = 0, theyOwe = 0
+    expenses.forEach(e => {
+      if (e.paidBy === partnerUid) iOwe    += e.splits?.[myUid]      || 0
+      else if (e.paidBy === myUid) theyOwe += e.splits?.[partnerUid] || 0
+    })
+    return theyOwe - iOwe
+  }, [expenses, myUid, partnerUid])
 
   const greeting = () => {
     const h = new Date().getHours()
@@ -210,6 +231,31 @@ export default function Home() {
             </div>
           )}
         </div>
+
+        {/* Balance dépenses */}
+        <button
+          onClick={() => navigate('/depenses')}
+          className="w-full rounded-4xl p-5 flex items-center gap-4 active:scale-98 transition-transform mb-4"
+          style={{ backgroundColor: balance === 0 ? '#C8F56A' : balance > 0 ? '#4FD9C4' : '#FF8B7E' }}
+        >
+          <div className="w-14 h-14 bg-black/10 rounded-3xl flex items-center justify-center text-3xl flex-shrink-0">
+            💰
+          </div>
+          <div className="text-left flex-1">
+            <div className="font-black text-black text-lg">Dépenses</div>
+            <div className="text-black/60 font-semibold text-sm mt-0.5">
+              {balance === 0
+                ? 'Vous êtes à égalité!'
+                : balance > 0
+                  ? `${partnerName} te doit ${Math.abs(balance).toFixed(2)} $`
+                  : `Tu dois ${Math.abs(balance).toFixed(2)} $ à ${partnerName}`
+              }
+            </div>
+          </div>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="3">
+            <polyline points="9,18 15,12 9,6"/>
+          </svg>
+        </button>
 
         {/* Liste de courses */}
         <button
