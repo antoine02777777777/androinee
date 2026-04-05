@@ -1,0 +1,159 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  -webkit-tap-highlight-color: transparent;
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif;
+  background: #ffffff;
+  -webkit-font-smoothing: antialiased;
+  overscroll-behavior: none;
+  color: #0a0a0a;
+}
+
+.safe-top    { padding-top: env(safe-area-inset-top); }
+.safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
+
+.scroll-area {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+}
+
+/* ── Typography ── */
+.page-title {
+  @apply text-4xl font-black tracking-tight text-black leading-tight;
+}
+.section-title {
+  @apply text-xl font-extrabold text-black tracking-tight;
+}
+
+/* ── Buttons ── */
+.btn-black {
+  @apply bg-black text-white font-bold py-4 px-6 rounded-2xl w-full
+         active:scale-95 transition-transform duration-100 text-base;
+}
+.btn-lime {
+  @apply bg-[#C8F56A] text-black font-bold py-4 px-6 rounded-2xl w-full
+         active:scale-95 transition-transform duration-100 text-base;
+}
+.btn-outline {
+  @apply bg-white text-black font-bold py-3 px-5 rounded-2xl border-2 border-black
+         active:scale-95 transition-transform duration-100;
+}
+.btn-ghost {
+  @apply text-black font-semibold py-3 px-4 rounded-2xl
+         active:bg-gray-100 transition-colors;
+}
+
+/* ── Inputs ── */
+.input {
+  @apply w-full bg-gray-100 rounded-2xl px-4 py-3.5 text-black
+         placeholder-gray-400 focus:outline-none focus:bg-gray-200
+         transition-colors text-base font-medium;
+  border: none;
+}
+.input-search {
+  @apply w-full bg-gray-100 rounded-2xl pl-11 pr-4 py-3.5 text-black
+         placeholder-gray-400 focus:outline-none focus:bg-gray-200
+         transition-colors text-base font-medium;
+  border: none;
+}
+
+/* ── Tag / Badge ── */
+.tag-black {
+  @apply bg-black text-white text-xs font-bold px-3 py-1.5 rounded-full inline-block;
+}
+.tag-white {
+  @apply bg-white text-black text-xs font-bold px-3 py-1.5 rounded-full inline-block;
+}
+.tag-outline {
+  @apply border-2 border-black text-black text-xs font-bold px-3 py-1.5 rounded-full inline-block;
+}
+
+/* ── Cards ── */
+.card-base {
+  @apply rounded-4xl overflow-hidden relative;
+}
+.card-white {
+  @apply bg-white rounded-4xl shadow-sm border border-gray-100;
+}
+
+/* ── Colored card backgrounds ── */
+.bg-coral     { background-color: #FF8B7E; }
+.bg-lime-card { background-color: #C8F56A; }
+.bg-mint      { background-color: #4FD9C4; }
+.bg-lavender  { background-color: #B8B4FF; }
+.bg-sunflower { background-color: #FFE566; }
+.bg-bubblegum { background-color: #FFB3D1; }
+.bg-ocean     { background-color: #7DD3FC; }
+.bg-sage      { background-color: #A8E6CF; }
+
+/* ── Nav ── */
+.nav-height { height: 72px; }
+
+/* ── Checkbox ── */
+.checkbox-custom {
+  @apply w-6 h-6 rounded-full border-2 border-gray-300 flex items-center justify-center
+         flex-shrink-0 transition-all duration-200;
+}
+.checkbox-custom.checked {
+  @apply bg-black border-black;
+}
+
+/* ── Animations ── */
+@keyframes slideUp {
+  from { transform: translateY(100%); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.slide-up { animation: slideUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
+.fade-in  { animation: fadeIn 0.2s ease-out; }
+
+/* ── Sheet (bottom drawer) ── */
+.sheet-overlay {
+  @apply fixed inset-0 bg-black/40 z-40;
+  backdrop-filter: blur(4px);
+}
+.sheet {
+  @apply fixed bottom-0 left-0 right-0 bg-white z-50 slide-up;
+  border-radius: 2rem 2rem 0 0;
+  max-height: 92vh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* ── Scrollbar hide ── */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* ── Toggle switch ── */
+.toggle {
+  @apply w-12 h-7 rounded-full transition-colors duration-200 relative flex-shrink-0;
+}
+.toggle-thumb {
+  @apply absolute top-1 w-5 h-5 bg-white rounded-full shadow transition-all duration-200;
+}
+
+/* ── Form label ── */
+.form-label {
+  @apply text-sm font-bold text-black block mb-2;
+}
+
+/* ── Priority colors ── */
+.priority-high   { @apply bg-red-100 text-red-600; }
+.priority-medium { @apply bg-amber-100 text-amber-600; }
+.priority-low    { @apply bg-green-100 text-green-600; }
