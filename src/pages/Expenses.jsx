@@ -350,6 +350,7 @@ function ExpenseForm({ coupleId, myUid, partnerUid, myName, partnerName, expense
   )
   const [note,    setNote]    = useState(expense?.note || '')
   const [loading, setLoading] = useState(false)
+  const [error,   setError]   = useState('')
 
   const amt = parseFloat(amount) || 0
 
@@ -366,11 +367,19 @@ function ExpenseForm({ coupleId, myUid, partnerUid, myName, partnerName, expense
 
   const handleSubmit = async () => {
     if (!title.trim() || !amount || amt <= 0) return
+    if (!coupleId) { setError('Erreur: espace couple introuvable.'); return }
     setLoading(true)
+    setError('')
     try {
+      // Si partenaire pas encore rejoint, utiliser un placeholder
+      const partner = partnerUid || 'pending'
+      const splits = splitType === 'equal'
+        ? { [myUid]: parseFloat((amt / 2).toFixed(2)), [partner]: parseFloat((amt / 2).toFixed(2)) }
+        : { [myUid]: parseFloat(customMine) || 0, [partner]: parseFloat(customPartner) || 0 }
+
       const data = {
         title: title.trim(), amount: amt, category, paidBy,
-        splitType, splits: getSplits(),
+        splitType, splits,
         date: Timestamp.fromDate(new Date(date + 'T12:00:00')),
         note: note.trim(),
         settled: expense?.settled || false,
@@ -384,7 +393,10 @@ function ExpenseForm({ coupleId, myUid, partnerUid, myName, partnerName, expense
         })
       }
       onClose()
-    } catch (e) { console.error(e) }
+    } catch (e) {
+      console.error('Expenses error:', e)
+      setError(`Erreur: ${e.code === 'permission-denied' ? 'Règles Firestore — voir instructions.' : e.message}`)
+    }
     setLoading(false)
   }
 
@@ -522,6 +534,12 @@ function ExpenseForm({ coupleId, myUid, partnerUid, myName, partnerName, expense
           value={note}
           onChange={e => setNote(e.target.value)}
         />
+
+        {error && (
+          <div className="bg-red-50 rounded-2xl px-4 py-3 mb-4 text-sm font-semibold text-red-600">
+            {error}
+          </div>
+        )}
 
         <button
           onClick={handleSubmit}
