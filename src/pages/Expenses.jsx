@@ -338,49 +338,38 @@ function DetailSheet({ exp, myUid, partnerUid, myName, partnerName, onClose, onE
 function ExpenseForm({ coupleId, myUid, partnerUid, myName, partnerName, expense, onClose }) {
   const [title,         setTitle]         = useState(expense?.title || '')
   const [amount,        setAmount]        = useState(expense?.amount?.toString() || '')
-  const [category,      setCategory]      = useState(expense?.category || 'autre')
+  const [category,      setCategory]      = useState(expense?.category || 'epicerie')
   const [paidBy,        setPaidBy]        = useState(expense?.paidBy || myUid)
   const [splitType,     setSplitType]     = useState(expense?.splitType || 'equal')
   const [customMine,    setCustomMine]    = useState(expense?.splits?.[myUid]?.toString() || '')
   const [customPartner, setCustomPartner] = useState(expense?.splits?.[partnerUid]?.toString() || '')
-  const [date,          setDate]          = useState(
-    expense?.date
-      ? format(expense.date.toDate ? expense.date.toDate() : new Date(expense.date), 'yyyy-MM-dd')
-      : format(new Date(), 'yyyy-MM-dd')
-  )
-  const [note,    setNote]    = useState(expense?.note || '')
-  const [loading, setLoading] = useState(false)
-  const [error,   setError]   = useState('')
+  const [note,          setNote]          = useState(expense?.note || '')
+  const [loading,       setLoading]       = useState(false)
+  const [error,         setError]         = useState('')
 
-  const amt = parseFloat(amount) || 0
+  // Bloquer le scroll du body quand le modal est ouvert
+  useEffect(() => {
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => { document.body.style.overflow = prev }
+  }, [])
 
-  const getSplits = () => {
-    if (splitType === 'equal') {
-      const half = Math.round(amt * 100 / 2) / 100
-      return { [myUid]: half, [partnerUid]: parseFloat((amt - half).toFixed(2)) }
-    }
-    return {
-      [myUid]:      parseFloat(customMine)    || 0,
-      [partnerUid]: parseFloat(customPartner) || 0,
-    }
-  }
+  const amt     = parseFloat(amount) || 0
+  const partner = partnerUid || 'pending'
+  const selCat  = CATEGORIES.find(c => c.id === category) || CATEGORIES[0]
 
   const handleSubmit = async () => {
-    if (!title.trim() || !amount || amt <= 0) return
-    if (!coupleId) { setError('Erreur: espace couple introuvable.'); return }
-    setLoading(true)
-    setError('')
+    if (!title.trim() || amt <= 0) return
+    if (!coupleId) { setError('Espace couple introuvable.'); return }
+    setLoading(true); setError('')
     try {
-      // Si partenaire pas encore rejoint, utiliser un placeholder
-      const partner = partnerUid || 'pending'
       const splits = splitType === 'equal'
         ? { [myUid]: parseFloat((amt / 2).toFixed(2)), [partner]: parseFloat((amt / 2).toFixed(2)) }
         : { [myUid]: parseFloat(customMine) || 0, [partner]: parseFloat(customPartner) || 0 }
-
       const data = {
         title: title.trim(), amount: amt, category, paidBy,
         splitType, splits,
-        date: Timestamp.fromDate(new Date(date + 'T12:00:00')),
+        date: Timestamp.fromDate(new Date()),
         note: note.trim(),
         settled: expense?.settled || false,
         updatedAt: Timestamp.now(),
@@ -394,160 +383,170 @@ function ExpenseForm({ coupleId, myUid, partnerUid, myName, partnerName, expense
       }
       onClose()
     } catch (e) {
-      console.error('Expenses error:', e)
-      setError(`Erreur: ${e.code === 'permission-denied' ? 'Règles Firestore — voir instructions.' : e.message}`)
+      setError(e.code === 'permission-denied'
+        ? 'Permission refusée — vérifie les règles Firestore.'
+        : e.message)
     }
     setLoading(false)
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end">
-      <div className="absolute inset-0 bg-black/40" onClick={onClose}/>
-      <div className="relative w-full bg-white rounded-t-4xl px-5 pt-5 pb-10 safe-bottom"
-           style={{ maxHeight: '92vh', overflowY: 'auto' }}>
-        <div className="w-12 h-1 bg-gray-200 rounded-full mx-auto mb-5"/>
-        <h2 className="text-2xl font-black text-black mb-5">
-          {expense ? 'Modifier' : 'Nouvelle'} dépense
-        </h2>
+    <div className="fixed inset-0 z-50 flex items-end" style={{ touchAction: 'none' }}>
+      <div className="absolute inset-0 bg-black/50" onClick={onClose}/>
+      <div
+        className="relative w-full bg-white rounded-t-4xl safe-bottom"
+        style={{ maxHeight: '88vh', display: 'flex', flexDirection: 'column' }}
+        onClick={e => e.stopPropagation()}
+      >
+        {/* Handle */}
+        <div className="flex-shrink-0 pt-4 pb-2 px-5">
+          <div className="w-12 h-1 bg-gray-200 rounded-full mx-auto mb-3"/>
+          <h2 className="text-2xl font-black text-black">
+            {expense ? 'Modifier' : 'Nouvelle'} dépense
+          </h2>
+        </div>
 
-        {/* Title */}
-        <label className="field-label">Description</label>
-        <input
-          className="field-input mb-4"
-          placeholder="Ex: Épicerie, Resto, Loyer..."
-          value={title}
-          onChange={e => setTitle(e.target.value)}
-        />
+        {/* Scrollable body */}
+        <div className="flex-1 overflow-y-auto px-5 pb-4" style={{ overscrollBehavior: 'contain' }}>
 
-        {/* Amount */}
-        <label className="field-label">Montant total</label>
-        <div className="relative mb-4">
-          <span className="absolute left-4 top-1/2 -translate-y-1/2 font-black text-gray-400 text-lg">$</span>
+          {/* Description + Montant côte à côte */}
+          <div className="flex gap-3 mb-4 mt-2">
+            <div className="flex-1">
+              <label className="field-label">Description</label>
+              <input
+                autoFocus
+                className="field-input"
+                placeholder="Épicerie, Resto..."
+                value={title}
+                onChange={e => setTitle(e.target.value)}
+              />
+            </div>
+            <div style={{ width: 110 }}>
+              <label className="field-label">Montant $</label>
+              <input
+                type="number" inputMode="decimal"
+                className="field-input text-xl font-black text-center"
+                placeholder="0.00"
+                value={amount}
+                onChange={e => setAmount(e.target.value)}
+              />
+            </div>
+          </div>
+
+          {/* Catégorie — dropdown */}
+          <label className="field-label">Catégorie</label>
+          <div className="relative mb-4">
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-xl pointer-events-none z-10">
+              {selCat.emoji}
+            </div>
+            <select
+              className="field-input pl-10 appearance-none font-bold"
+              value={category}
+              onChange={e => setCategory(e.target.value)}
+              style={{ backgroundColor: selCat.color }}
+            >
+              {CATEGORIES.map(c => (
+                <option key={c.id} value={c.id}>{c.emoji} {c.label}</option>
+              ))}
+            </select>
+            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="3">
+                <polyline points="6,9 12,15 18,9"/>
+              </svg>
+            </div>
+          </div>
+
+          {/* Qui a payé */}
+          <label className="field-label">Qui a payé?</label>
+          <div className="flex gap-2 mb-4">
+            {[{ uid: myUid, label: `${myName} (moi)` }, { uid: partner, label: partnerName }].map(p => (
+              <button
+                key={p.uid}
+                type="button"
+                onClick={() => setPaidBy(p.uid)}
+                className={`flex-1 py-3.5 rounded-2xl font-black text-sm transition-all ${
+                  paidBy === p.uid ? 'bg-black text-white' : 'bg-gray-100 text-gray-500'
+                }`}
+              >
+                {p.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Partage */}
+          <label className="field-label">Partage</label>
+          <div className="flex gap-2 mb-3">
+            {[{ id: 'equal', label: '50 / 50' }, { id: 'custom', label: 'Personnalisé' }].map(s => (
+              <button
+                key={s.id}
+                type="button"
+                onClick={() => setSplitType(s.id)}
+                className={`flex-1 py-3 rounded-2xl font-black text-sm transition-all ${
+                  splitType === s.id ? 'bg-black text-white' : 'bg-gray-100 text-gray-500'
+                }`}
+              >
+                {s.label}
+              </button>
+            ))}
+          </div>
+
+          {splitType === 'equal' && amt > 0 && (
+            <div className="flex gap-2 mb-4 text-center">
+              {[myName, partnerName].map(n => (
+                <div key={n} className="flex-1 bg-gray-50 rounded-2xl p-3">
+                  <div className="font-black text-black">{(amt / 2).toFixed(2)} $</div>
+                  <div className="text-xs font-bold text-gray-400">{n}</div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {splitType === 'custom' && (
+            <div className="flex gap-2 mb-4">
+              {[
+                { name: myName,      val: customMine,    set: setCustomMine },
+                { name: partnerName, val: customPartner, set: setCustomPartner },
+              ].map(p => (
+                <div key={p.name} className="flex-1">
+                  <label className="block text-xs font-bold text-gray-400 mb-1">{p.name}</label>
+                  <input
+                    type="number" inputMode="decimal"
+                    className="w-full bg-gray-100 rounded-2xl px-4 py-3 font-black text-black outline-none"
+                    placeholder="0.00"
+                    value={p.val}
+                    onChange={e => p.set(e.target.value)}
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Note */}
+          <label className="field-label">Note (optionnel)</label>
           <input
-            type="number" inputMode="decimal"
-            className="field-input pl-9 text-2xl font-black"
-            placeholder="0.00"
-            value={amount}
-            onChange={e => setAmount(e.target.value)}
+            className="field-input mb-4"
+            placeholder="Détails..."
+            value={note}
+            onChange={e => setNote(e.target.value)}
           />
+
+          {error && (
+            <div className="bg-red-50 rounded-2xl px-4 py-3 mb-4 text-sm font-semibold text-red-600">
+              {error}
+            </div>
+          )}
         </div>
 
-        {/* Category */}
-        <label className="field-label">Catégorie</label>
-        <div className="grid grid-cols-4 gap-2 mb-4">
-          {CATEGORIES.map(cat => (
-            <button
-              key={cat.id}
-              onClick={() => setCategory(cat.id)}
-              className={`flex flex-col items-center gap-1 py-3 rounded-2xl transition-all ${
-                category === cat.id ? 'ring-2 ring-black ring-offset-1 scale-105' : ''
-              }`}
-              style={{ backgroundColor: cat.color }}
-            >
-              <span className="text-xl">{cat.emoji}</span>
-              <span className="text-xs font-bold text-black/70 leading-tight text-center">{cat.label}</span>
-            </button>
-          ))}
+        {/* Fixed bottom button */}
+        <div className="flex-shrink-0 px-5 pb-8 pt-3 border-t border-gray-100">
+          <button
+            onClick={handleSubmit}
+            disabled={loading || !title.trim() || amt <= 0}
+            className="w-full py-4 bg-black text-white font-black rounded-2xl text-base disabled:opacity-40 active:scale-98 transition-transform"
+          >
+            {loading ? 'Enregistrement...' : expense ? 'Modifier →' : 'Ajouter →'}
+          </button>
         </div>
-
-        {/* Qui a payé */}
-        <label className="field-label">Qui a payé?</label>
-        <div className="flex gap-2 mb-4">
-          {[{ uid: myUid, name: `${myName} (moi)` }, { uid: partnerUid, name: partnerName }].map(p => (
-            <button
-              key={p.uid}
-              onClick={() => setPaidBy(p.uid)}
-              className={`flex-1 py-3.5 rounded-2xl font-black text-sm transition-all ${
-                paidBy === p.uid ? 'bg-black text-white' : 'bg-gray-100 text-gray-500'
-              }`}
-            >
-              {p.name}
-            </button>
-          ))}
-        </div>
-
-        {/* Split */}
-        <label className="field-label">Partage</label>
-        <div className="flex gap-2 mb-3">
-          {[{ id: 'equal', label: '50 / 50' }, { id: 'custom', label: 'Personnalisé' }].map(s => (
-            <button
-              key={s.id}
-              onClick={() => setSplitType(s.id)}
-              className={`flex-1 py-3.5 rounded-2xl font-black text-sm transition-all ${
-                splitType === s.id ? 'bg-black text-white' : 'bg-gray-100 text-gray-500'
-              }`}
-            >
-              {s.label}
-            </button>
-          ))}
-        </div>
-
-        {splitType === 'equal' && amt > 0 && (
-          <div className="flex gap-2 mb-4">
-            {[
-              { name: myName, share: (amt / 2).toFixed(2) },
-              { name: partnerName, share: (amt / 2).toFixed(2) }
-            ].map(p => (
-              <div key={p.name} className="flex-1 bg-gray-50 rounded-2xl p-3 text-center">
-                <div className="font-black text-black">{p.share} $</div>
-                <div className="text-xs font-bold text-gray-400">{p.name}</div>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {splitType === 'custom' && (
-          <div className="flex gap-2 mb-4">
-            {[
-              { name: myName, val: customMine, set: setCustomMine },
-              { name: partnerName, val: customPartner, set: setCustomPartner }
-            ].map(p => (
-              <div key={p.name} className="flex-1">
-                <label className="block text-xs font-bold text-gray-400 mb-1">{p.name}</label>
-                <input
-                  type="number" inputMode="decimal"
-                  className="w-full bg-gray-100 rounded-2xl px-4 py-3 font-black text-black outline-none"
-                  placeholder="0.00"
-                  value={p.val}
-                  onChange={e => p.set(e.target.value)}
-                />
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Date */}
-        <label className="field-label">Date</label>
-        <input
-          type="date"
-          className="field-input mb-4"
-          value={date}
-          onChange={e => setDate(e.target.value)}
-        />
-
-        {/* Note */}
-        <label className="field-label">Note (optionnel)</label>
-        <textarea
-          className="field-input mb-6 resize-none"
-          rows={2}
-          placeholder="Détails..."
-          value={note}
-          onChange={e => setNote(e.target.value)}
-        />
-
-        {error && (
-          <div className="bg-red-50 rounded-2xl px-4 py-3 mb-4 text-sm font-semibold text-red-600">
-            {error}
-          </div>
-        )}
-
-        <button
-          onClick={handleSubmit}
-          disabled={loading || !title.trim() || amt <= 0}
-          className="w-full py-4 bg-black text-white font-black rounded-2xl text-base disabled:opacity-40 active:scale-98 transition-transform"
-        >
-          {loading ? 'Enregistrement...' : expense ? 'Modifier →' : 'Ajouter →'}
-        </button>
       </div>
     </div>
   )

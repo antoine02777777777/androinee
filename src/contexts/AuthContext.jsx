@@ -20,10 +20,10 @@ export function AuthProvider({ children }) {
   const unsubCoupleRef = useRef(null)
 
   useEffect(() => {
-    // Force la session à persister dans localStorage (survit aux fermetures d'app)
-    setPersistence(auth, browserLocalPersistence).catch(console.error)
-
-    const unsubAuth = onAuthStateChanged(auth, (firebaseUser) => {
+    // Force la session à persister — DOIT être awaité avant onAuthStateChanged
+    let unsubAuth = () => {}
+    setPersistence(auth, browserLocalPersistence).then(() => {
+      unsubAuth = onAuthStateChanged(auth, (firebaseUser) => {
       setUser(firebaseUser)
 
       if (!firebaseUser) {
@@ -89,6 +89,7 @@ export function AuthProvider({ children }) {
         if (unsubCoupleRef.current) unsubCoupleRef.current()
       }
     })
+    }).catch(console.error)
 
     return () => unsubAuth()
   }, [])
