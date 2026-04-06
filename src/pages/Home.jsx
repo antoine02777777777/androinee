@@ -42,7 +42,7 @@ export default function Home() {
   const coupleId    = profile?.coupleId
   const myUid       = user?.uid
   const partnerUid  = couple?.members?.find(m => m !== myUid)
-  const partnerName = couple?.names?.[partnerUid]?.split(' ')[0] || 'Partenaire'
+  const partnerName = couple?.names?.[partnerUid]?.split(' ')[0] || 'Andréanne'
 
   useEffect(() => {
     if ('Notification' in window && Notification.permission === 'default') {

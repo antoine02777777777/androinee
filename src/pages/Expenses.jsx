@@ -42,7 +42,7 @@ export default function Expenses() {
   const myUid       = user?.uid
   const partnerUid  = couple?.members?.find(m => m !== myUid)
   const myName      = profile?.name?.split(' ')[0] || 'Moi'
-  const partnerName = couple?.names?.[partnerUid]?.split(' ')[0] || 'Partenaire'
+  const partnerName = couple?.names?.[partnerUid]?.split(' ')[0] || 'Andréanne'
 
   useEffect(() => {
     if (!coupleId) return
@@ -400,37 +400,32 @@ function ExpenseForm({ coupleId, myUid, partnerUid, myName, partnerName, expense
       >
         {/* Handle */}
         <div className="flex-shrink-0 pt-4 pb-2 px-5">
-          <div className="w-12 h-1 bg-gray-200 rounded-full mx-auto mb-3"/>
-          <h2 className="text-2xl font-black text-black">
-            {expense ? 'Modifier' : 'Nouvelle'} dépense
-          </h2>
+          <div className="w-12 h-1 bg-gray-200 rounded-full mx-auto mb-4"/>
         </div>
 
         {/* Scrollable body */}
         <div className="flex-1 overflow-y-auto px-5 pb-4" style={{ overscrollBehavior: 'contain' }}>
 
-          {/* Description + Montant côte à côte */}
-          <div className="flex gap-3 mb-4 mt-2">
-            <div className="flex-1">
-              <label className="field-label">Description</label>
-              <input
-                autoFocus
-                className="field-input"
-                placeholder="Épicerie, Resto..."
-                value={title}
-                onChange={e => setTitle(e.target.value)}
-              />
-            </div>
-            <div style={{ width: 110 }}>
-              <label className="field-label">Montant $</label>
-              <input
-                type="number" inputMode="decimal"
-                className="field-input text-xl font-black text-center"
-                placeholder="0.00"
-                value={amount}
-                onChange={e => setAmount(e.target.value)}
-              />
-            </div>
+          {/* Nom de la dépense — gros champ prominent */}
+          <input
+            autoFocus
+            className="w-full text-3xl font-black text-black outline-none placeholder-gray-200 mb-1 bg-transparent"
+            placeholder="Épicerie IGA..."
+            value={title}
+            onChange={e => setTitle(e.target.value)}
+          />
+          <div className="h-px bg-gray-100 mb-4"/>
+
+          {/* Montant — grand */}
+          <div className="relative mb-5">
+            <span className="absolute left-4 top-1/2 -translate-y-1/2 font-black text-gray-400 text-xl">$</span>
+            <input
+              type="number" inputMode="decimal"
+              className="w-full bg-gray-100 rounded-2xl pl-9 pr-4 py-4 text-3xl font-black text-black outline-none"
+              placeholder="0.00"
+              value={amount}
+              onChange={e => setAmount(e.target.value)}
+            />
           </div>
 
           {/* Catégorie — dropdown */}
@@ -520,15 +515,6 @@ function ExpenseForm({ coupleId, myUid, partnerUid, myName, partnerName, expense
               ))}
             </div>
           )}
-
-          {/* Note */}
-          <label className="field-label">Note (optionnel)</label>
-          <input
-            className="field-input mb-4"
-            placeholder="Détails..."
-            value={note}
-            onChange={e => setNote(e.target.value)}
-          />
 
           {error && (
             <div className="bg-red-50 rounded-2xl px-4 py-3 mb-4 text-sm font-semibold text-red-600">
