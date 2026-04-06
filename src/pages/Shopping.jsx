@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import {
   collection, addDoc, updateDoc, deleteDoc,
   doc, onSnapshot, orderBy, query, Timestamp
@@ -21,6 +22,14 @@ export default function Shopping() {
   const [tab, setTab]             = useState('liste')
   const [editItem, setEditItem]   = useState(null)
   const [showManual, setShowManual] = useState(false)
+  const [searchParams, setSearchParams] = useSearchParams()
+
+  useEffect(() => {
+    if (searchParams.get('add') === '1') {
+      setShowManual(true)
+      setSearchParams({}, { replace: true })
+    }
+  }, [])
   const [manualName, setManualName] = useState('')
   const [manualQty, setManualQty]   = useState('1')
   const [manualStore, setManualStore] = useState('')

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import {
   collection, addDoc, updateDoc, deleteDoc,
   doc, onSnapshot, orderBy, query, Timestamp
@@ -26,6 +27,14 @@ export default function Tasks() {
   const [tab, setTab]           = useState('pending')
   const [showForm, setShowForm] = useState(false)
   const [editTask, setEditTask] = useState(null)
+  const [searchParams, setSearchParams] = useSearchParams()
+
+  useEffect(() => {
+    if (searchParams.get('add') === '1') {
+      setShowForm(true)
+      setSearchParams({}, { replace: true })
+    }
+  }, [])
   const [filter, setFilter]     = useState('all')
 
   useEffect(() => {

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import {
   collection, query, where, orderBy,
   onSnapshot, deleteDoc, doc, Timestamp
@@ -25,6 +26,14 @@ export default function Calendar() {
   const [selected, setSelected] = useState(null)
   const [showForm, setShowForm] = useState(false)
   const [editEvent, setEditEvent] = useState(null)
+  const [searchParams, setSearchParams] = useSearchParams()
+
+  useEffect(() => {
+    if (searchParams.get('add') === '1') {
+      setShowForm(true)
+      setSearchParams({}, { replace: true })
+    }
+  }, [])
 
   useEffect(() => {
     if (!coupleId) return

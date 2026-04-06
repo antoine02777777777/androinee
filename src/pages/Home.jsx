@@ -33,6 +33,7 @@ function checkUpcomingNotifications(events) {
 
 export default function Home() {
   const { user, profile, couple, logout } = useAuth()
+  const [menuOpen, setMenuOpen] = useState(false)
   const navigate = useNavigate()
   const [events,   setEvents]   = useState([])
   const [tasks,    setTasks]    = useState([])
@@ -114,6 +115,7 @@ export default function Home() {
   const CARD_COLORS = ['#FF8B7E', '#C8F56A', '#4FD9C4', '#B8B4FF', '#FFE566']
 
   return (
+    <>
     <div className="h-full scroll-area bg-white">
       <div className="px-5 pb-8">
 
@@ -128,13 +130,12 @@ export default function Home() {
             </h1>
           </div>
           <button
-            onClick={logout}
-            className="w-11 h-11 rounded-2xl bg-black flex items-center justify-center mt-1"
+            onClick={() => setMenuOpen(true)}
+            className="w-11 h-11 rounded-2xl bg-black flex items-center justify-center mt-1 active:scale-95 transition-transform"
           >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5">
-              <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/>
-              <polyline points="16,17 21,12 16,7"/>
-              <line x1="21" y1="12" x2="9" y2="12"/>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3">
+              <line x1="12" y1="5" x2="12" y2="19"/>
+              <line x1="5" y1="12" x2="19" y2="12"/>
             </svg>
           </button>
         </div>
@@ -281,6 +282,50 @@ export default function Home() {
 
       </div>
     </div>
+
+    {/* Menu + overlay */}
+    {menuOpen && (
+      <div className="fixed inset-0 z-50 flex flex-col justify-end">
+        <div
+          className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+          onClick={() => setMenuOpen(false)}
+        />
+        <div className="relative px-4 pb-8 safe-bottom space-y-3">
+
+          {[
+            { label: 'Ajouter une dépense',   emoji: '💰', color: '#FF8B7E', route: '/depenses?add=1' },
+            { label: 'Ajouter une course',     emoji: '🛒', color: '#C8F56A', route: '/courses?add=1'  },
+            { label: 'Ajouter un événement',   emoji: '📅', color: '#4FD9C4', route: '/calendrier?add=1' },
+            { label: 'Ajouter une tâche',      emoji: '✅', color: '#B8B4FF', route: '/taches?add=1'   },
+          ].map((item, i) => (
+            <button
+              key={item.route}
+              onClick={() => { setMenuOpen(false); navigate(item.route) }}
+              className="w-full flex items-center gap-4 rounded-3xl px-5 py-4 active:scale-98 transition-all"
+              style={{
+                backgroundColor: item.color,
+                animationDelay: `${i * 60}ms`
+              }}
+            >
+              <span className="text-2xl">{item.emoji}</span>
+              <span className="font-black text-black text-lg">{item.label}</span>
+              <svg className="ml-auto" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="3">
+                <polyline points="9,18 15,12 9,6"/>
+              </svg>
+            </button>
+          ))}
+
+          {/* Annuler */}
+          <button
+            onClick={() => setMenuOpen(false)}
+            className="w-full bg-white rounded-3xl px-5 py-4 font-black text-black text-center active:scale-98 transition-transform"
+          >
+            Annuler
+          </button>
+        </div>
+      </div>
+    )}
+    </>
   )
 }
 
