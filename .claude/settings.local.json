@@ -4,7 +4,8 @@
       "Bash(npm install:*)",
       "mcp__Claude_Preview__preview_start",
       "Bash(npx tailwindcss:*)",
-      "Bash(pkill -f \"vite\")"
+      "Bash(pkill -f \"vite\")",
+      "Bash(npm run:*)"
     ]
   }
 }
